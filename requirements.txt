@@ -12,3 +12,6 @@ voyageai>=0.2.0
 
 # Blockchain Integration
 cdp-agentkit-core>=0.0.1
+
+# Display & Formatting
+rich>=13.7.0

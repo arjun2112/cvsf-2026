@@ -8,6 +8,8 @@ from typing import List, Dict, Any, Optional
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, OperationFailure
 import voyageai
+from rich.console import Console
+from rich.table import Table
 
 
 class FinOpsDB:
@@ -166,6 +168,10 @@ class FinOpsDB:
                         "_id": 1,
                         "content": 1,
                         "metadata": 1,
+                        "priority": 1,
+                        "owner_email": 1,
+                        "hourly_cost": 1,
+                        "developer_wallet": 1,
                         "score": {"$meta": "vectorSearchScore"}
                     }
                 }
@@ -197,6 +203,61 @@ class FinOpsDB:
         except Exception as e:
             print(f"Error searching infrastructure context: {str(e)}")
             return []
+    
+    def print_search_results(self, results: List[Dict[str, Any]], show_content: bool = False):
+        """
+        Print search results in a clean table format using rich.
+        
+        Args:
+            results: List of search results from search_infra_context
+            show_content: Whether to show content preview in the table
+        """
+        if not results:
+            console = Console()
+            console.print("[yellow]⚠ No results to display[/yellow]")
+            return
+        
+        console = Console()
+        table = Table(show_header=True, header_style="bold magenta")
+        
+        # Define columns
+        table.add_column("#", style="dim", width=3)
+        table.add_column("Score", justify="right", style="cyan", width=8)
+        table.add_column("Name", style="green", width=30)
+        table.add_column("Priority", justify="center", width=10)
+        table.add_column("Cost/hr", justify="right", style="yellow", width=10)
+        table.add_column("Environment", justify="center", width=12)
+        
+        if show_content:
+            table.add_column("Content Preview", width=40)
+        
+        # Priority color mapping
+        priority_colors = {
+            "critical": "[bold red]",
+            "high": "[red]",
+            "medium": "[yellow]",
+            "low": "[green]"
+        }
+        
+        # Add rows
+        for i, result in enumerate(results, 1):
+            score = f"{result.get('score', 0):.4f}"
+            name = result.get('metadata', {}).get('name', 'Unknown')
+            priority = result.get('priority', 'unknown')
+            cost = f"${result.get('hourly_cost', 0):.3f}"
+            env = result.get('metadata', {}).get('environment', 'N/A')
+            
+            # Apply color to priority
+            priority_colored = f"{priority_colors.get(priority, '')}{priority.upper()}[/]"
+            
+            if show_content:
+                content = result.get('content', '')[:80] + "..."
+                table.add_row(str(i), score, name, priority_colored, cost, env, content)
+            else:
+                table.add_row(str(i), score, name, priority_colored, cost, env)
+        
+        console.print(table)
+        console.print(f"\n[dim]Total results: {len(results)}[/dim]")
     
     def get_collection_stats(self) -> Dict[str, Any]:
         """
