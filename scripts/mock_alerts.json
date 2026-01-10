@@ -1,0 +1,69 @@
+[
+  {
+    "alert_id": "ALT-2026-001",
+    "timestamp": "2026-01-10T08:15:00Z",
+    "severity": "high",
+    "resource_name": "Legacy GPU Training Cluster",
+    "alert_type": "high_cost_idle_resource",
+    "message": "GPU cluster has been idle for 60+ days with $12.24/hr cost. Consider decommissioning.",
+    "metrics": {
+      "hourly_cost": 12.24,
+      "idle_days": 62,
+      "cpu_utilization": 0.02,
+      "gpu_utilization": 0.0
+    }
+  },
+  {
+    "alert_id": "ALT-2026-002",
+    "timestamp": "2026-01-10T09:30:00Z",
+    "severity": "critical",
+    "resource_name": "test-temp-01",
+    "alert_type": "suspicious_naming",
+    "message": "Server with temporary-sounding name detected in production environment. Possible security risk or misconfiguration.",
+    "metrics": {
+      "hourly_cost": 0.768,
+      "days_running": 45,
+      "environment": "production"
+    }
+  },
+  {
+    "alert_id": "ALT-2026-003",
+    "timestamp": "2026-01-10T10:45:00Z",
+    "severity": "medium",
+    "resource_name": "Automation Node Cluster",
+    "alert_type": "optimization_opportunity",
+    "message": "Build infrastructure shows predictable usage patterns. Scheduled scaling could reduce costs by 40%.",
+    "metrics": {
+      "hourly_cost": 0.17,
+      "peak_hours": "09:00-18:00",
+      "off_hours_utilization": 0.15
+    }
+  },
+  {
+    "alert_id": "ALT-2026-004",
+    "timestamp": "2026-01-10T11:20:00Z",
+    "severity": "high",
+    "resource_name": "Oversized Dev Database",
+    "alert_type": "overprovisioned_resource",
+    "message": "Database instance using only 18% of provisioned memory. Significant downsizing opportunity detected.",
+    "metrics": {
+      "hourly_cost": 6.048,
+      "memory_utilization": 0.18,
+      "recommended_instance": "r5.4xlarge",
+      "potential_savings": 4.536
+    }
+  },
+  {
+    "alert_id": "ALT-2026-005",
+    "timestamp": "2026-01-10T12:00:00Z",
+    "severity": "low",
+    "resource_name": "Global CDN",
+    "alert_type": "informational",
+    "message": "CDN performing optimally with 99.99% uptime. No action required.",
+    "metrics": {
+      "hourly_cost": 0.15,
+      "uptime": 0.9999,
+      "cache_hit_rate": 0.87
+    }
+  }
+]

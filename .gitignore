@@ -1,3 +1,6 @@
 # ignore all env variables 
 .env
 .env.*
+
+# Wallet data (contains private keys)
+wallet_data.json
