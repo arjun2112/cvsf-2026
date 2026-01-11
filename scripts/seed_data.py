@@ -382,9 +382,9 @@ def main():
         
         # Clear existing documents
         if current_count > 0:
-            print(f"\n⚠ Clearing {current_count} existing documents to avoid duplicates...")
+            print(f"\n[WARNING] Clearing {current_count} existing documents to avoid duplicates...")
             result = db.infra_collection.delete_many({})
-            print(f"✓ Deleted {result.deleted_count} documents")
+            print(f"[OK] Deleted {result.deleted_count} documents")
         
         print()
         
@@ -393,14 +393,14 @@ def main():
         documents = generate_infrastructure_documents()
         
         # Display summary
-        print(f"\n✓ Generated {len(documents)} documents")
+        print(f"\n[OK] Generated {len(documents)} documents")
         
         print("\n" + "-" * 70)
         print("STRATEGIC CLUSTERS:")
         print("-" * 70)
         print("🎭 Red Herrings (High Priority + Deceptive Names):")
         print("   - test-temp-01, demo-sandbox-experimental, scratch-dev-prototype")
-        print("\n💰 High-Value Targets (Expensive + Low Priority):")
+        print("\n[PAYMENT] High-Value Targets (Expensive + Low Priority):")
         print("   - Legacy GPU Training Cluster ($12.24/hr)")
         print("   - Oversized Dev Database ($6.05/hr)")
         print("   - Data Migration Worker ($5.04/hr)")
@@ -436,7 +436,7 @@ def main():
         high_value_targets = [d for d in documents if d['hourly_cost'] > 5.0 and d['priority'] == 'low']
         if high_value_targets:
             total_savings = sum(d['hourly_cost'] for d in high_value_targets)
-            print(f"\n💡 Potential savings from high-value targets: ${total_savings:.2f}/hr (${total_savings * 730:.2f}/month)")
+            print(f"\n[TIP] Potential savings from high-value targets: ${total_savings:.2f}/hr (${total_savings * 730:.2f}/month)")
         
         # Seed the database
         print("\n" + "-" * 70)
@@ -450,22 +450,22 @@ def main():
         print(f"Total documents in collection: {final_count}")
         
         print("\n" + "=" * 70)
-        print("✓ Seeding completed successfully!")
+        print("[OK] Seeding completed successfully!")
         print("=" * 70)
         print(f"\nYour Atlas cluster now has {final_count} enhanced infrastructure documents.")
         print("Features:")
-        print("  ✓ Strategic red herrings for testing agent intelligence")
-        print("  ✓ High-value optimization targets")
-        print("  ✓ Semantic variations for testing search quality")
-        print("  ✓ Enriched descriptions with diverse terminology")
-        print("  ✓ All metadata fields populated (including developer_wallet)")
+        print("  [OK] Strategic red herrings for testing agent intelligence")
+        print("  [OK] High-value optimization targets")
+        print("  [OK] Semantic variations for testing search quality")
+        print("  [OK] Enriched descriptions with diverse terminology")
+        print("  [OK] All metadata fields populated (including developer_wallet)")
         print("\nYou can now use search_infra_context() and print_search_results() to query!")
         
         # Close connection
         db.close()
         
     except Exception as e:
-        print(f"\n✗ Error during seeding: {str(e)}")
+        print(f"\n[FAIL] Error during seeding: {str(e)}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

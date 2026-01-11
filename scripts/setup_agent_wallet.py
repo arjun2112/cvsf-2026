@@ -24,7 +24,7 @@ console = Console()
 try:
     from cdp import Wallet, Cdp
 except ImportError:
-    console.print("[red]❌ Error: Coinbase SDK not installed[/red]")
+    console.print("[red][ERROR] Error: Coinbase SDK not installed[/red]")
     console.print("Install with: pip install cdp-sdk")
     exit(1)
 
@@ -41,7 +41,7 @@ def setup_agent_wallet():
     # Validate environment variables
     if not os.getenv('CDP_API_KEY') or not os.getenv('CDP_API_SECRET'):
         console.print(Panel(
-            "[red]❌ Missing CDP API credentials[/red]\n\n"
+            "[red][ERROR] Missing CDP API credentials[/red]\n\n"
             "Please set CDP_API_KEY and CDP_API_SECRET in your .env file.\n\n"
             "[bold]How to get credentials:[/bold]\n"
             "1. Go to https://portal.cdp.coinbase.com/\n"
@@ -51,12 +51,12 @@ def setup_agent_wallet():
             "5. Copy the entire 'privateKey' field to CDP_API_SECRET\n"
             "   (including -----BEGIN EC PRIVATE KEY----- header)",
             border_style="red",
-            title="⚠️  Configuration Error"
+            title="[WARNING]️  Configuration Error"
         ))
         return
     
     # Step 1: Configure CDP SDK
-    console.print("\n[bold]1️⃣ Configuring CDP SDK...[/bold]")
+    console.print("\n[bold][1] Configuring CDP SDK...[/bold]")
     
     try:
         # Parse private key - replace literal \n with actual newlines
@@ -66,9 +66,9 @@ def setup_agent_wallet():
             api_key_name=os.getenv('CDP_API_KEY'),
             private_key=private_key
         )
-        console.print("   ✅ CDP SDK configured successfully")
+        console.print("   [SUCCESS] CDP SDK configured successfully")
     except Exception as e:
-        console.print(f"[red]❌ Failed to configure CDP: {e}[/red]")
+        console.print(f"[red][ERROR] Failed to configure CDP: {e}[/red]")
         console.print("\n[yellow]Tip: Make sure your CDP_API_SECRET includes the full PEM format:[/yellow]")
         console.print("[dim]-----BEGIN EC PRIVATE KEY-----[/dim]")
         console.print("[dim]...base64 encoded key...[/dim]")
@@ -76,7 +76,7 @@ def setup_agent_wallet():
         return
     
     # Step 2: Check for existing wallet data
-    console.print("\n[bold]2️⃣ Checking for existing wallet...[/bold]")
+    console.print("\n[bold][2] Checking for existing wallet...[/bold]")
     wallet_file = Path('wallet_data.json')
     
     if wallet_file.exists():
@@ -86,28 +86,28 @@ def setup_agent_wallet():
                 wallet_data = json.load(f)
             
             wallet = Wallet.import_data(wallet_data)
-            console.print("   ✅ Wallet imported successfully")
+            console.print("   [SUCCESS] Wallet imported successfully")
         except Exception as e:
-            console.print(f"[red]❌ Failed to import wallet: {e}[/red]")
+            console.print(f"[red][ERROR] Failed to import wallet: {e}[/red]")
             console.print("   Creating new wallet instead...")
             wallet = Wallet.create(network_id='base-sepolia')
-            console.print("   ✅ New wallet created")
+            console.print("   [SUCCESS] New wallet created")
     else:
         console.print("   🆕 No existing wallet found, creating new one...")
         wallet = Wallet.create(network_id='base-sepolia')
-        console.print("   ✅ Wallet created successfully")
+        console.print("   [SUCCESS] Wallet created successfully")
     
     # Step 3: Display wallet address
-    console.print("\n[bold]3️⃣ Wallet Information[/bold]")
+    console.print("\n[bold][3] Wallet Information[/bold]")
     wallet_address = wallet.default_address.address_id
     console.print(f"   📍 [bold cyan]Address:[/bold cyan] {wallet_address}")
     
     # Step 4: Check balance and request faucet if needed
-    console.print("\n[bold]4️⃣ Checking Balance...[/bold]")
+    console.print("\n[bold][4] Checking Balance...[/bold]")
     
     try:
         balance = wallet.balance('eth')
-        console.print(f"   💰 Current Balance: [yellow]{balance} ETH[/yellow]")
+        console.print(f"   [PAYMENT] Current Balance: [yellow]{balance} ETH[/yellow]")
         
         if float(balance) == 0:
             console.print("\n   💧 [bold]Balance is 0 - Requesting faucet funds...[/bold]")
@@ -125,18 +125,18 @@ def setup_agent_wallet():
                 
                 try:
                     faucet_tx = wallet.faucet()
-                    console.print(f"   ✅ Faucet request successful!")
+                    console.print(f"   [SUCCESS] Faucet request successful!")
                     console.print(f"   🔗 Transaction: {faucet_tx.transaction_hash}")
                 except Exception as e:
-                    console.print(f"[yellow]⚠️  Faucet request issue: {e}[/yellow]")
+                    console.print(f"[yellow][WARNING]️  Faucet request issue: {e}[/yellow]")
         else:
-            console.print("   ✅ Wallet already funded")
+            console.print("   [SUCCESS] Wallet already funded")
             
     except Exception as e:
-        console.print(f"[yellow]⚠️  Could not check balance: {e}[/yellow]")
+        console.print(f"[yellow][WARNING]️  Could not check balance: {e}[/yellow]")
     
     # Step 5: Export wallet data
-    console.print("\n[bold]5️⃣ Saving Wallet Data...[/bold]")
+    console.print("\n[bold][5] Saving Wallet Data...[/bold]")
     
     try:
         wallet_data = wallet.export_data()
@@ -152,22 +152,22 @@ def setup_agent_wallet():
         with open('wallet_data.json', 'w') as f:
             json.dump(wallet_dict, f, indent=2)
         
-        console.print("   ✅ Wallet data saved to wallet_data.json")
+        console.print("   [SUCCESS] Wallet data saved to wallet_data.json")
         
         # Critical warning
         console.print(Panel(
-            "[bold red]⚠️  CRITICAL WARNING ⚠️[/bold red]\n\n"
+            "[bold red][WARNING]️  CRITICAL WARNING [WARNING]️[/bold red]\n\n"
             "[yellow]DO NOT DELETE wallet_data.json[/yellow]\n"
             "[yellow]OR YOU WILL LOSE ACCESS TO YOUR AGENT WALLET[/yellow]\n\n"
             "This file contains the private keys for your agent's wallet.\n"
             "Back it up securely and never commit it to version control.",
             border_style="red",
-            title="⚠️  Security Alert",
+            title="[WARNING]️  Security Alert",
             title_align="center"
         ))
         
     except Exception as e:
-        console.print(f"[red]❌ Failed to export wallet: {e}[/red]")
+        console.print(f"[red][ERROR] Failed to export wallet: {e}[/red]")
         return
     
     # Step 6: Verify final balance after waiting for faucet transaction
@@ -182,18 +182,18 @@ def setup_agent_wallet():
     
     try:
         final_balance = wallet.balance('eth')
-        console.print(f"\n   💰 [bold green]Final Balance: {final_balance} ETH[/bold green]")
+        console.print(f"\n   [PAYMENT] [bold green]Final Balance: {final_balance} ETH[/bold green]")
         
         # Basescan link
         basescan_url = f"https://sepolia.basescan.org/address/{wallet_address}"
-        console.print(f"   🔍 [bold cyan]View on Basescan:[/bold cyan] {basescan_url}")
+        console.print(f"   [SEARCH] [bold cyan]View on Basescan:[/bold cyan] {basescan_url}")
         
     except Exception as e:
-        console.print(f"[yellow]⚠️  Could not verify final balance: {e}[/yellow]")
+        console.print(f"[yellow][WARNING]️  Could not verify final balance: {e}[/yellow]")
     
     # Success summary
     console.print(Panel.fit(
-        f"[bold green]✅ Agent Wallet Setup Complete![/bold green]\n\n"
+        f"[bold green][SUCCESS] Agent Wallet Setup Complete![/bold green]\n\n"
         f"Address: {wallet_address}\n"
         f"Network: Base Sepolia\n"
         f"Balance: {final_balance} ETH\n\n"

@@ -50,6 +50,7 @@ class FinOpsDB:
         self.db = self.client['finops_engine']
         self.infra_collection = self.db['infra_knowledge']
         self.audit_collection = self.db['audit_trail']
+        self.reasoning_logs_collection = self.db['reasoning_logs']
         
         # Vector search configuration
         self.embedding_model = "voyage-3.5"
@@ -145,7 +146,7 @@ class FinOpsDB:
             List of documents with similarity scores, or empty list if no results
         """
         if not query or not query.strip():
-            print("⚠ Empty query provided")
+            print("[WARNING] Empty query provided")
             return []
         
         try:
@@ -187,16 +188,16 @@ class FinOpsDB:
             ]
             
             if not filtered_results:
-                print(f"⚠ No results found for query: '{query[:50]}...'")
+                print(f"[WARNING] No results found for query: '{query[:50]}...'")
                 return []
             
-            print(f"✓ Found {len(filtered_results)} results")
+            print(f"[OK] Found {len(filtered_results)} results")
             return filtered_results
             
         except OperationFailure as e:
             # Handle case where vector index doesn't exist
             if "index not found" in str(e).lower():
-                print("⚠ Vector search index not found. Please create the index first.")
+                print("[WARNING] Vector search index not found. Please create the index first.")
                 print(f"   Index name: {self.vector_index_name}")
                 return []
             raise
@@ -214,7 +215,7 @@ class FinOpsDB:
         """
         if not results:
             console = Console()
-            console.print("[yellow]⚠ No results to display[/yellow]")
+            console.print("[yellow][WARNING] No results to display[/yellow]")
             return
         
         console = Console()
@@ -279,11 +280,75 @@ class FinOpsDB:
             print(f"Error getting collection stats: {str(e)}")
             return {"error": str(e)}
     
+    def save_reasoning_log(
+        self,
+        alert_id: str,
+        workflow_status: str,
+        recommendation: str,
+        confidence_score: float,
+        tx_hash: Optional[str] = None,
+        tx_amount: Optional[float] = None,
+        tx_recipient: Optional[str] = None,
+        context_data: Optional[List[Dict[str, Any]]] = None,
+        analysis: Optional[str] = None,
+        audit_log: Optional[List[str]] = None
+    ) -> str:
+        """
+        Save reasoning log with transaction details to MongoDB.
+        
+        Args:
+            alert_id: ID of the alert being processed
+            workflow_status: Status of the workflow (APPROVED, ESCALATED, etc.)
+            recommendation: Final recommendation (DECOMMISSION, OPTIMIZE, etc.)
+            confidence_score: Confidence score from vector search
+            tx_hash: Transaction hash from Coinbase AgentKit (optional)
+            tx_amount: Amount transferred in ETH (optional)
+            tx_recipient: Recipient wallet address (optional)
+            context_data: Context data from vector search (optional)
+            analysis: Gemini analysis text (optional)
+            audit_log: List of audit log entries (optional)
+            
+        Returns:
+            Inserted document ID as string
+        """
+        from datetime import datetime, UTC
+        
+        try:
+            log_entry = {
+                "alert_id": alert_id,
+                "workflow_status": workflow_status,
+                "recommendation": recommendation,
+                "confidence_score": confidence_score,
+                "timestamp": datetime.now(UTC),
+                "analysis": analysis,
+                "context_data": context_data,
+                "audit_log": audit_log or []
+            }
+            
+            # Add transaction details if provided
+            if tx_hash:
+                log_entry["transaction"] = {
+                    "tx_hash": tx_hash,
+                    "amount": tx_amount,
+                    "recipient": tx_recipient,
+                    "network": "base-sepolia",
+                    "timestamp": datetime.now(UTC)
+                }
+            
+            result = self.reasoning_logs_collection.insert_one(log_entry)
+            print(f"[OK] Reasoning log saved to MongoDB: {result.inserted_id}")
+            
+            return str(result.inserted_id)
+            
+        except Exception as e:
+            print(f"[FAIL] Error saving reasoning log: {str(e)}")
+            raise
+    
     def close(self):
         """Close MongoDB connection."""
         if self.client:
             self.client.close()
-            print("✓ MongoDB connection closed")
+            print("[OK] MongoDB connection closed")
 
 
 # Example usage
@@ -297,7 +362,7 @@ if __name__ == "__main__":
         
         # Get stats
         stats = db.get_collection_stats()
-        print(f"\n✓ Connection successful!")
+        print(f"\n[OK] Connection successful!")
         print(f"Database: finops_engine")
         print(f"Collection: infra_knowledge")
         print(f"Documents: {stats.get('document_count', 0)}")
@@ -306,5 +371,5 @@ if __name__ == "__main__":
         db.close()
         
     except Exception as e:
-        print(f"\n✗ Error: {str(e)}")
+        print(f"\n[FAIL] Error: {str(e)}")
         exit(1)
