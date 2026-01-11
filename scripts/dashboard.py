@@ -64,13 +64,10 @@ def create_dashboard_table(logs):
         title_style="bold cyan"
     )
     
-    table.add_column("Time", style="dim", width=19)
-    table.add_column("Alert ID", style="cyan", width=15)
-    table.add_column("Status", width=12)
-    table.add_column("Recommendation", width=15)
-    table.add_column("Confidence", justify="right", width=10)
-    table.add_column("TX Hash", style="green", width=15)
-    table.add_column("Amount", justify="right", width=12)
+    table.add_column("Alert ID", style="cyan", width=20)
+    table.add_column("Status", width=15)
+    table.add_column("Recommendation", width=18)
+    table.add_column("Confidence", justify="right", width=12)
     
     for log in logs:
         # Format status with color
@@ -92,6 +89,8 @@ def create_dashboard_table(logs):
             rec_text = "[yellow]OPTIMIZE[/yellow]"
         elif recommendation == 'MONITOR':
             rec_text = "[cyan]MONITOR[/cyan]"
+        elif recommendation == 'NO CHANGE':
+            rec_text = "[dim]NO CHANGE[/dim]"
         else:
             rec_text = recommendation
         
@@ -99,35 +98,18 @@ def create_dashboard_table(logs):
         confidence = log.get('confidence_score')
         if confidence:
             conf_text = f"{confidence:.4f}"
-            if confidence >= 0.85:
+            if confidence >= 0.80:
                 conf_text = f"[green]{conf_text}[/green]"
             else:
                 conf_text = f"[yellow]{conf_text}[/yellow]"
         else:
             conf_text = "N/A"
         
-        # Format transaction hash
-        tx_hash = log.get('tx_hash', '')
-        if tx_hash and tx_hash != 'N/A':
-            tx_display = f"{tx_hash[:6]}...{tx_hash[-4:]}" if len(tx_hash) > 10 else tx_hash
-        else:
-            tx_display = "[dim]-[/dim]"
-        
-        # Format amount
-        tx_amount = log.get('tx_amount')
-        if tx_amount:
-            amount_text = f"{tx_amount:.6f} ETH"
-        else:
-            amount_text = "[dim]-[/dim]"
-        
         table.add_row(
-            format_timestamp(log.get('created_at')),
             log.get('alert_id', 'N/A'),
             status_text,
             rec_text,
-            conf_text,
-            tx_display,
-            amount_text
+            conf_text
         )
     
     return table
@@ -140,8 +122,17 @@ def create_summary_panel(logs, refresh_time):
     escalated = sum(1 for log in logs if log.get('workflow_status') == 'ESCALATED')
     total_savings = calculate_total_savings(logs)
     
-    # Calculate total bounties paid
-    total_bounties = sum(log.get('tx_amount', 0) for log in logs if log.get('tx_hash'))
+    # Calculate total bounties paid (including shadow mode transactions)
+    total_bounties = 0.0
+    for log in logs:
+        # Get transaction amount if present
+        tx_data = log.get('transaction', {})
+        if isinstance(tx_data, dict):
+            tx_amount = tx_data.get('amount', 0)
+        else:
+            tx_amount = log.get('tx_amount', 0)
+        if tx_amount:
+            total_bounties += tx_amount
     
     summary_text = Text()
     summary_text.append("FINOPS DASHBOARD SUMMARY\n\n", style="bold white")

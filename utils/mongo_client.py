@@ -51,6 +51,7 @@ class FinOpsDB:
         self.infra_collection = self.db['infra_knowledge']
         self.audit_collection = self.db['audit_trail']
         self.reasoning_logs_collection = self.db['reasoning_logs']
+        self.global_metrics_collection = self.db['global_metrics']  # NEW: For Shadow Mode metrics
         
         # Vector search configuration
         self.embedding_model = "voyage-3.5"
@@ -342,6 +343,52 @@ class FinOpsDB:
             
         except Exception as e:
             print(f"[FAIL] Error saving reasoning log: {str(e)}")
+            raise
+    
+    def save_global_metrics(
+        self,
+        alert_id: str,
+        hourly_cost: float,
+        monthly_savings: float,
+        bounty_amount: float,
+        settlement_status: str = 'Pending Settlement',
+        mode: str = 'SHADOW'
+    ) -> str:
+        """
+        Save global metrics to track cumulative savings and bounties.
+        Used for Shadow Mode demo metrics aggregation.
+        
+        Args:
+            alert_id: ID of the alert being processed
+            hourly_cost: Hourly cost of the resource
+            monthly_savings: Projected monthly savings (hourly_cost * 720)
+            bounty_amount: Bounty amount issued
+            settlement_status: Settlement status ('Pending Settlement', 'Settled', etc.)
+            mode: Operating mode ('SHADOW' or 'LIVE')
+            
+        Returns:
+            Inserted document ID as string
+        """
+        from datetime import datetime, UTC
+        
+        try:
+            metrics_entry = {
+                "alert_id": alert_id,
+                "hourly_cost": hourly_cost,
+                "monthly_savings": monthly_savings,
+                "bounty_amount": bounty_amount,
+                "settlement_status": settlement_status,
+                "mode": mode,
+                "timestamp": datetime.now(UTC)
+            }
+            
+            result = self.global_metrics_collection.insert_one(metrics_entry)
+            print(f"[OK] Global metrics saved to MongoDB: {result.inserted_id}")
+            
+            return str(result.inserted_id)
+            
+        except Exception as e:
+            print(f"[FAIL] Error saving global metrics: {str(e)}")
             raise
     
     def close(self):
